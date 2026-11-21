@@ -54,3 +54,4 @@ Unicode & Emojis: 🌍 ✨ 👨‍💻 ⚡
 Languages: 日本語, Español, Français, 中文`;
 
 export const SAMPLE_BASE64 = `SGVsbG8sIERldkJ5dGUhIPCfkYACompetency:IEZhc3QsIHByaXZhY3ktZnJpZW5kbHkgb25saW5lIGRldmVsb3BlciB0b29scy4KVW5pY29kZSAmIEVtb2ppczog8J+MjCDinKgg8J+RjOKAjfCfkrsg4pqhCkxhbmd1YWdlczog5pel5pys6KqeLCBFc3Bhw7FvbCwgRnJhbsOnYWlzLCDkuK3mloc=`;
+

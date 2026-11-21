@@ -64,11 +64,10 @@ export function JsonFormatter() {
                 setIsMinified(false);
                 setIndentOption(2);
               }}
-              className={`px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${
-                !isMinified && indentOption === 2
+              className={`px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${!isMinified && indentOption === 2
                   ? "bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-xs"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-              }`}
+                }`}
             >
               2 Spaces
             </button>
@@ -78,11 +77,10 @@ export function JsonFormatter() {
                 setIsMinified(false);
                 setIndentOption(4);
               }}
-              className={`px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${
-                !isMinified && indentOption === 4
+              className={`px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${!isMinified && indentOption === 4
                   ? "bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-xs"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-              }`}
+                }`}
             >
               4 Spaces
             </button>
@@ -92,22 +90,20 @@ export function JsonFormatter() {
                 setIsMinified(false);
                 setIndentOption("\t");
               }}
-              className={`px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${
-                !isMinified && indentOption === "\t"
+              className={`px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer ${!isMinified && indentOption === "\t"
                   ? "bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-xs"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-              }`}
+                }`}
             >
               Tabs
             </button>
             <button
               type="button"
               onClick={() => setIsMinified(true)}
-              className={`px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer flex items-center gap-1 ${
-                isMinified
+              className={`px-3 py-1.5 rounded-md font-medium transition-colors cursor-pointer flex items-center gap-1 ${isMinified
                   ? "bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-xs"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-              }`}
+                }`}
             >
               <Minimize2 className="w-3.5 h-3.5" />
               Minify

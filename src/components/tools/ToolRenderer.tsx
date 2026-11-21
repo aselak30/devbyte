@@ -53,6 +53,46 @@ const TimestampConverter = dynamic(
   { ssr: false, loading: () => <ToolLoadingSkeleton /> }
 );
 
+const RegexTester = dynamic(
+  () =>
+    import("@/features/regex-tester/RegexTester").then(
+      (mod) => mod.RegexTester
+    ),
+  { ssr: false, loading: () => <ToolLoadingSkeleton /> }
+);
+
+const ColorConverter = dynamic(
+  () =>
+    import("@/features/color-converter/ColorConverter").then(
+      (mod) => mod.ColorConverter
+    ),
+  { ssr: false, loading: () => <ToolLoadingSkeleton /> }
+);
+
+const CronGenerator = dynamic(
+  () =>
+    import("@/features/cron-generator/CronGenerator").then(
+      (mod) => mod.CronGenerator
+    ),
+  { ssr: false, loading: () => <ToolLoadingSkeleton /> }
+);
+
+const HtmlFormatter = dynamic(
+  () =>
+    import("@/features/formatters/HtmlFormatter").then(
+      (mod) => mod.HtmlFormatter
+    ),
+  { ssr: false, loading: () => <ToolLoadingSkeleton /> }
+);
+
+const SqlFormatter = dynamic(
+  () =>
+    import("@/features/formatters/SqlFormatter").then(
+      (mod) => mod.SqlFormatter
+    ),
+  { ssr: false, loading: () => <ToolLoadingSkeleton /> }
+);
+
 function ToolLoadingSkeleton() {
   return (
     <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 text-center animate-pulse">
@@ -82,8 +122,17 @@ export function ToolRenderer({ tool }: ToolRendererProps) {
       return <UuidGenerator />;
     case "timestamp-converter":
       return <TimestampConverter />;
+    case "regex-tester":
+      return <RegexTester />;
+    case "color-converter":
+      return <ColorConverter />;
+    case "cron-generator":
+      return <CronGenerator />;
+    case "html-formatter":
+      return <HtmlFormatter />;
+    case "sql-formatter":
+      return <SqlFormatter />;
     default:
-      // For any future tools, fallback to JSON Formatter or generic utility
       return <JsonFormatter />;
   }
 }
