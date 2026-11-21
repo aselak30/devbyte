@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from "react";
 import { CodePane } from "@/components/tools/CodePane";
 import { formatDartList, SAMPLE_DART_LIST } from "@/features/formatters/codeFormatters";
-import { Smartphone, CheckCircle2, ArrowDownAZ } from "lucide-react";
+import { Smartphone } from "lucide-react";
 
 export function DartListFormatter() {
   const [input, setInput] = useState(SAMPLE_DART_LIST);
