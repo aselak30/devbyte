@@ -27,10 +27,6 @@ test("JSON Minifier: reduces size of formatted JSON", () => {
 // Test 2: Unicode Base64 Encoding & Decoding
 function textToBase64(text, urlSafe = false) {
   const bytes = new TextEncoder().encode(text);
-  let binary = "";
-  for (let i = 0; i < bytes.byteLength; i++) {
-    binary += String.fromCharCode(bytes[i]);
-  }
   let base64 = Buffer.from(bytes).toString("base64");
   if (urlSafe) {
     base64 = base64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
