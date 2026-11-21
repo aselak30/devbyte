@@ -93,6 +93,22 @@ const SqlFormatter = dynamic(
   { ssr: false, loading: () => <ToolLoadingSkeleton /> }
 );
 
+const JsonToFreezed = dynamic(
+  () =>
+    import("@/features/flutter-tools/JsonToFreezed").then(
+      (mod) => mod.JsonToFreezed
+    ),
+  { ssr: false, loading: () => <ToolLoadingSkeleton /> }
+);
+
+const PubspecHelper = dynamic(
+  () =>
+    import("@/features/flutter-tools/PubspecHelper").then(
+      (mod) => mod.PubspecHelper
+    ),
+  { ssr: false, loading: () => <ToolLoadingSkeleton /> }
+);
+
 function ToolLoadingSkeleton() {
   return (
     <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 text-center animate-pulse">
@@ -132,6 +148,10 @@ export function ToolRenderer({ tool }: ToolRendererProps) {
       return <HtmlFormatter />;
     case "sql-formatter":
       return <SqlFormatter />;
+    case "json-to-freezed":
+      return <JsonToFreezed />;
+    case "flutter-pubspec-helper":
+      return <PubspecHelper />;
     default:
       return <JsonFormatter />;
   }
