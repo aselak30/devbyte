@@ -1,0 +1,366 @@
+export interface DartGeneratorOptions {
+  rootClassName: string;
+  nullSafety: boolean;
+  useJsonSerializable: boolean;
+  useFreezed: boolean;
+  generateToJson: boolean;
+  allFieldsNullable: boolean;
+}
+
+export interface DartClassDef {
+  name: string;
+  fields: {
+    key: string;
+    propertyName: string;
+    dartType: string;
+    isNestedClass: boolean;
+    nestedClassName?: string;
+    isList: boolean;
+    listItemType?: string;
+  }[];
+}
+
+function toCamelCase(str: string): string {
+  if (!str) return "item";
+  // Remove non-alphanumeric except underscore
+  const cleaned = str.replace(/[^a-zA-Z0-9_]/g, "_");
+  const parts = cleaned.split("_").filter(Boolean);
+  if (parts.length === 0) return "field";
+  const first = parts[0].toLowerCase();
+  const rest = parts
+    .slice(1)
+    .map((p) => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase())
+    .join("");
+  let result = first + rest;
+  // If starts with number, prepend 'n'
+  if (/^[0-9]/.test(result)) {
+    result = "n" + result;
+  }
+  // Reserved Dart keywords
+  const reserved = [
+    "default",
+    "case",
+    "switch",
+    "class",
+    "final",
+    "const",
+    "var",
+    "dynamic",
+    "void",
+    "return",
+    "break",
+    "continue",
+    "import",
+    "export",
+    "null",
+    "true",
+    "false",
+    "is",
+    "as",
+    "in",
+    "assert",
+    "new",
+    "this",
+    "super",
+    "extends",
+    "with",
+    "implements",
+    "int",
+    "double",
+    "bool",
+    "String",
+    "List",
+    "Map",
+    "Set",
+  ];
+  if (reserved.includes(result)) {
+    result = `${result}Value`;
+  }
+  return result;
+}
+
+function toPascalCase(str: string): string {
+  if (!str) return "Item";
+  const camel = toCamelCase(str);
+  return camel.charAt(0).toUpperCase() + camel.slice(1);
+}
+
+function inferType(
+  value: unknown,
+  keyName: string,
+  classesMap: Map<string, DartClassDef>
+): { dartType: string; isNestedClass: boolean; nestedClassName?: string; isList: boolean; listItemType?: string } {
+  if (value === null || value === undefined) {
+    return { dartType: "dynamic", isNestedClass: false, isList: false };
+  }
+
+  if (typeof value === "string") {
+    return { dartType: "String", isNestedClass: false, isList: false };
+  }
+
+  if (typeof value === "boolean") {
+    return { dartType: "bool", isNestedClass: false, isList: false };
+  }
+
+  if (typeof value === "number") {
+    if (Number.isInteger(value)) {
+      return { dartType: "int", isNestedClass: false, isList: false };
+    }
+    return { dartType: "double", isNestedClass: false, isList: false };
+  }
+
+  if (Array.isArray(value)) {
+    if (value.length === 0) {
+      return { dartType: "List<dynamic>", isNestedClass: false, isList: true, listItemType: "dynamic" };
+    }
+    const sample = value[0];
+    const singularName = keyName.endsWith("s") ? keyName.slice(0, -1) : `${keyName}Item`;
+    const itemInfer = inferType(sample, singularName, classesMap);
+
+    if (itemInfer.isNestedClass && itemInfer.nestedClassName) {
+      return {
+        dartType: `List<${itemInfer.nestedClassName}>`,
+        isNestedClass: true,
+        nestedClassName: itemInfer.nestedClassName,
+        isList: true,
+        listItemType: itemInfer.nestedClassName,
+      };
+    }
+
+    return {
+      dartType: `List<${itemInfer.dartType}>`,
+      isNestedClass: false,
+      isList: true,
+      listItemType: itemInfer.dartType,
+    };
+  }
+
+  if (typeof value === "object") {
+    const className = toPascalCase(keyName);
+    buildClassDef(value as Record<string, unknown>, className, classesMap);
+    return {
+      dartType: className,
+      isNestedClass: true,
+      nestedClassName: className,
+      isList: false,
+    };
+  }
+
+  return { dartType: "dynamic", isNestedClass: false, isList: false };
+}
+
+function buildClassDef(
+  obj: Record<string, unknown>,
+  className: string,
+  classesMap: Map<string, DartClassDef>
+): void {
+  if (classesMap.has(className)) return;
+
+  const fields: DartClassDef["fields"] = [];
+
+  for (const [key, val] of Object.entries(obj)) {
+    const propName = toCamelCase(key);
+    const inferred = inferType(val, key, classesMap);
+
+    fields.push({
+      key,
+      propertyName: propName,
+      dartType: inferred.dartType,
+      isNestedClass: inferred.isNestedClass,
+      nestedClassName: inferred.nestedClassName,
+      isList: inferred.isList,
+      listItemType: inferred.listItemType,
+    });
+  }
+
+  classesMap.set(className, { name: className, fields });
+}
+
+export function generateDartFromJson(
+  rawJson: string,
+  options: DartGeneratorOptions
+): { code: string; error: string | null } {
+  const trimmed = rawJson.trim();
+  if (!trimmed) {
+    return { code: "", error: null };
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(trimmed);
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Invalid JSON input";
+    return { code: "", error: msg };
+  }
+
+  const rootClass = toPascalCase(options.rootClassName || "Autogenerated");
+  const classesMap = new Map<string, DartClassDef>();
+
+  if (Array.isArray(parsed)) {
+    if (parsed.length > 0 && typeof parsed[0] === "object" && parsed[0] !== null) {
+      buildClassDef(parsed[0] as Record<string, unknown>, rootClass, classesMap);
+    } else {
+      return { code: "// JSON root is an array of primitives", error: null };
+    }
+  } else if (typeof parsed === "object" && parsed !== null) {
+    buildClassDef(parsed as Record<string, unknown>, rootClass, classesMap);
+  } else {
+    return { code: "// JSON root must be an Object or Array of Objects", error: null };
+  }
+
+  const codeBlocks: string[] = [];
+
+  if (options.useFreezed) {
+    codeBlocks.push(`import 'package:freezed_annotation/freezed_annotation.dart';\n`);
+    codeBlocks.push(`part '${rootClass.toLowerCase()}.freezed.dart';`);
+    codeBlocks.push(`part '${rootClass.toLowerCase()}.g.dart';\n`);
+
+    for (const [, classDef] of classesMap) {
+      codeBlocks.push(`@freezed`);
+      codeBlocks.push(`abstract class ${classDef.name} with _$${classDef.name} {`);
+      codeBlocks.push(`  const factory ${classDef.name}({`);
+      for (const f of classDef.fields) {
+        const nullSuffix = options.nullSafety && options.allFieldsNullable ? "?" : "";
+        const isRequired = options.nullSafety && !options.allFieldsNullable ? "required " : "";
+        codeBlocks.push(`    @JsonKey(name: '${f.key}') ${isRequired}${f.dartType}${nullSuffix} ${f.propertyName},`);
+      }
+      codeBlocks.push(`  }) = _${classDef.name};\n`);
+      codeBlocks.push(`  factory ${classDef.name}.fromJson(Map<String, dynamic> json) => _$${classDef.name}FromJson(json);`);
+      codeBlocks.push(`}\n`);
+    }
+
+    return { code: codeBlocks.join("\n"), error: null };
+  }
+
+  if (options.useJsonSerializable) {
+    codeBlocks.push(`import 'package:json_annotation/json_annotation.dart';\n`);
+    codeBlocks.push(`part '${rootClass.toLowerCase()}.g.dart';\n`);
+
+    for (const [, classDef] of classesMap) {
+      codeBlocks.push(`@JsonSerializable(explicitToJson: true)`);
+      codeBlocks.push(`class ${classDef.name} {`);
+      
+      // Fields
+      for (const f of classDef.fields) {
+        const nullSuffix = options.nullSafety && options.allFieldsNullable ? "?" : "";
+        if (f.key !== f.propertyName) {
+          codeBlocks.push(`  @JsonKey(name: '${f.key}')`);
+        }
+        codeBlocks.push(`  final ${f.dartType}${nullSuffix} ${f.propertyName};`);
+      }
+      codeBlocks.push("");
+
+      // Constructor
+      codeBlocks.push(`  const ${classDef.name}({`);
+      for (const f of classDef.fields) {
+        const requiredPrefix = options.nullSafety && !options.allFieldsNullable ? "required " : "";
+        codeBlocks.push(`    ${requiredPrefix}this.${f.propertyName},`);
+      }
+      codeBlocks.push(`  });\n`);
+
+      // fromJson & toJson
+      codeBlocks.push(`  factory ${classDef.name}.fromJson(Map<String, dynamic> json) => _$${classDef.name}FromJson(json);`);
+      if (options.generateToJson) {
+        codeBlocks.push(`  Map<String, dynamic> toJson() => _$${classDef.name}ToJson(this);`);
+      }
+      codeBlocks.push(`}\n`);
+    }
+
+    return { code: codeBlocks.join("\n"), error: null };
+  }
+
+  // Standard Plain Dart Object (PODO) with sound null safety
+  for (const [, classDef] of classesMap) {
+    codeBlocks.push(`class ${classDef.name} {`);
+
+    // Fields
+    for (const f of classDef.fields) {
+      const nullSuffix = options.nullSafety && options.allFieldsNullable ? "?" : "";
+      codeBlocks.push(`  final ${f.dartType}${nullSuffix} ${f.propertyName};`);
+    }
+    codeBlocks.push("");
+
+    // Constructor
+    codeBlocks.push(`  const ${classDef.name}({`);
+    for (const f of classDef.fields) {
+      const requiredPrefix = options.nullSafety && !options.allFieldsNullable ? "required " : "";
+      codeBlocks.push(`    ${requiredPrefix}this.${f.propertyName},`);
+    }
+    codeBlocks.push(`  });\n`);
+
+    // fromJson factory
+    codeBlocks.push(`  factory ${classDef.name}.fromJson(Map<String, dynamic> json) {`);
+    codeBlocks.push(`    return ${classDef.name}(`);
+
+    for (const f of classDef.fields) {
+      const keyStr = `'${f.key}'`;
+      if (f.isNestedClass && !f.isList && f.nestedClassName) {
+        if (options.allFieldsNullable) {
+          codeBlocks.push(`      ${f.propertyName}: json[${keyStr}] != null ? ${f.nestedClassName}.fromJson(json[${keyStr}] as Map<String, dynamic>) : null,`);
+        } else {
+          codeBlocks.push(`      ${f.propertyName}: ${f.nestedClassName}.fromJson(json[${keyStr}] as Map<String, dynamic>),`);
+        }
+      } else if (f.isList && f.isNestedClass && f.listItemType) {
+        if (options.allFieldsNullable) {
+          codeBlocks.push(`      ${f.propertyName}: (json[${keyStr}] as List<dynamic>?)?.map((e) => ${f.listItemType}.fromJson(e as Map<String, dynamic>)).toList(),`);
+        } else {
+          codeBlocks.push(`      ${f.propertyName}: (json[${keyStr}] as List<dynamic>).map((e) => ${f.listItemType}.fromJson(e as Map<String, dynamic>)).toList(),`);
+        }
+      } else if (f.isList && f.listItemType) {
+        if (options.allFieldsNullable) {
+          codeBlocks.push(`      ${f.propertyName}: (json[${keyStr}] as List<dynamic>?)?.map((e) => e as ${f.listItemType}).toList(),`);
+        } else {
+          codeBlocks.push(`      ${f.propertyName}: (json[${keyStr}] as List<dynamic>).map((e) => e as ${f.listItemType}).toList(),`);
+        }
+      } else {
+        const castType = f.dartType;
+        const nullCheck = options.allFieldsNullable ? "?" : "";
+        codeBlocks.push(`      ${f.propertyName}: json[${keyStr}] as ${castType}${nullCheck},`);
+      }
+    }
+    codeBlocks.push(`    );`);
+    codeBlocks.push(`  }\n`);
+
+    // toJson method
+    if (options.generateToJson) {
+      codeBlocks.push(`  Map<String, dynamic> toJson() {`);
+      codeBlocks.push(`    final Map<String, dynamic> data = <String, dynamic>{};`);
+      for (const f of classDef.fields) {
+        if (f.isNestedClass && !f.isList) {
+          const nullSafeOp = options.allFieldsNullable ? "?" : "";
+          codeBlocks.push(`    data['${f.key}'] = ${f.propertyName}${nullSafeOp}.toJson();`);
+        } else if (f.isList && f.isNestedClass) {
+          const nullSafeOp = options.allFieldsNullable ? "?" : "";
+          codeBlocks.push(`    data['${f.key}'] = ${f.propertyName}${nullSafeOp}.map((v) => v.toJson()).toList();`);
+        } else {
+          codeBlocks.push(`    data['${f.key}'] = ${f.propertyName};`);
+        }
+      }
+      codeBlocks.push(`    return data;`);
+      codeBlocks.push(`  }`);
+    }
+
+    codeBlocks.push(`}\n`);
+  }
+
+  return { code: codeBlocks.join("\n"), error: null };
+}
+
+export const SAMPLE_DART_JSON = `{
+  "id": 101,
+  "name": "Flutter Dash",
+  "email": "dash@flutter.dev",
+  "is_admin": true,
+  "score": 98.5,
+  "role": {
+    "title": "Lead Developer",
+    "permissions": ["read", "write", "deploy"]
+  },
+  "projects": [
+    {
+      "project_id": "P01",
+      "project_name": "DevByte Web Platform",
+      "completed": false
+    }
+  ]
+}`;
