@@ -31,6 +31,9 @@ export const metadata: Metadata = {
     title: "DevByte - Developer Tools That Just Work",
     description: "Fast, privacy-friendly online developer tools that just work.",
   },
+  other: {
+    "google-adsense-account": "ca-pub-5075378095924370",
+  },
 };
 
 export default function RootLayout({
@@ -41,6 +44,14 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className="h-full">
       <head>
+        {/* Google AdSense Verification Script (Directly in <head> for AdSense Crawler) */}
+        <script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5075378095924370"
+          crossOrigin="anonymous"
+        />
+
+        {/* Inline Theme Detection Script */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -73,14 +84,6 @@ export default function RootLayout({
             gtag('js', new Date());
           `}
         </Script>
-
-        {/* Google AdSense */}
-        <Script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5075378095924370"
-          crossOrigin="anonymous"
-          strategy="afterInteractive"
-        />
 
         {children}
       </body>
