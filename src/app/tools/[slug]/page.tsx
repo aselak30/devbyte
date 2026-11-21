@@ -9,6 +9,8 @@ import { Icon } from "@/components/common/Icon";
 import { Badge } from "@/components/common/Badge";
 import { ToolCard } from "@/components/tools/ToolCard";
 import { ToolRenderer } from "@/components/tools/ToolRenderer";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { AdSenseBanner } from "@/components/ads/AdSenseBanner";
 import {
   ShieldCheck,
   ChevronRight,
@@ -54,8 +56,23 @@ export default async function ToolDetailPage({ params }: ToolPageProps) {
     (t) => t.id !== tool.id && (t.category === tool.category || t.popular)
   ).slice(0, 3);
 
+  const schemaData = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: tool.name,
+    operatingSystem: "Any",
+    applicationCategory: "DeveloperApplication",
+    description: tool.description,
+    offers: {
+      "@type": "Offer",
+      price: "0",
+      priceCurrency: "USD",
+    },
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+      <JsonLd data={schemaData} />
       <Header />
 
       <main className="flex-1 py-8 sm:py-12">
@@ -129,6 +146,9 @@ export default async function ToolDetailPage({ params }: ToolPageProps) {
           <div className="mt-8">
             <ToolRenderer tool={tool} />
           </div>
+
+          {/* Non-intrusive Ad Placement */}
+          <AdSenseBanner slot="tool_footer_banner" format="auto" />
 
           {/* How to Use Section */}
           <section className="mt-12 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8">

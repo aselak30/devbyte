@@ -109,6 +109,30 @@ const PubspecHelper = dynamic(
   { ssr: false, loading: () => <ToolLoadingSkeleton /> }
 );
 
+const CssFormatter = dynamic(
+  () =>
+    import("@/features/formatters/CssFormatter").then(
+      (mod) => mod.CssFormatter
+    ),
+  { ssr: false, loading: () => <ToolLoadingSkeleton /> }
+);
+
+const XmlFormatter = dynamic(
+  () =>
+    import("@/features/formatters/XmlFormatter").then(
+      (mod) => mod.XmlFormatter
+    ),
+  { ssr: false, loading: () => <ToolLoadingSkeleton /> }
+);
+
+const DartListFormatter = dynamic(
+  () =>
+    import("@/features/flutter-tools/DartListFormatter").then(
+      (mod) => mod.DartListFormatter
+    ),
+  { ssr: false, loading: () => <ToolLoadingSkeleton /> }
+);
+
 function ToolLoadingSkeleton() {
   return (
     <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 text-center animate-pulse">
@@ -152,6 +176,12 @@ export function ToolRenderer({ tool }: ToolRendererProps) {
       return <JsonToFreezed />;
     case "flutter-pubspec-helper":
       return <PubspecHelper />;
+    case "css-formatter":
+      return <CssFormatter />;
+    case "xml-formatter":
+      return <XmlFormatter />;
+    case "dart-list-formatter":
+      return <DartListFormatter />;
     default:
       return <JsonFormatter />;
   }
