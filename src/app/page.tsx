@@ -1,4 +1,5 @@
 import React from "react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import {
   ShieldCheck,
@@ -10,19 +11,85 @@ import {
   BookOpen,
   CheckCircle2,
   Clock,
+  HelpCircle,
 } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { HeroSearch } from "@/components/tools/HeroSearch";
 import { ToolCard } from "@/components/tools/ToolCard";
 import { Icon } from "@/components/common/Icon";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { CATEGORIES } from "@/lib/constants/categories";
 import { TOOLS, POPULAR_TOOLS, RECENT_TOOLS } from "@/lib/constants/tools";
 import { TUTORIALS } from "@/lib/constants/tutorials";
 
+export const metadata: Metadata = {
+  title: "Free Online Developer Tools — JSON, Dart, JWT, Base64 & More | DevByte",
+  description:
+    "Free privacy-friendly online developer tools. Format JSON, generate Dart models, decode JWTs, encode Base64, generate UUIDs, convert timestamps — all client-side, no sign-up required.",
+  alternates: { canonical: "/" },
+};
+
+const HOMEPAGE_FAQS = [
+  {
+    question: "What is DevByte?",
+    answer:
+      "DevByte is a free online developer tools platform offering JSON formatters, Dart model generators, JWT decoders, Base64 encoders, UUID generators, and many more utilities — all processing data locally in your browser with zero server uploads.",
+  },
+  {
+    question: "Are DevByte tools free to use?",
+    answer:
+      "Yes. All DevByte tools are completely free for individual developers, teams, and students worldwide. No account or sign-up is required.",
+  },
+  {
+    question: "Is my data safe when using DevByte?",
+    answer:
+      "Yes. Every DevByte tool runs 100% client-side in your browser. Your JSON payloads, JWT tokens, source code, and other data are never sent to our servers or stored in any database.",
+  },
+  {
+    question: "What developer tools does DevByte offer?",
+    answer:
+      "DevByte offers JSON formatting and validation, JSON-to-Dart model generation, JWT decoding, Base64 encoding/decoding, URL encoding, UUID generation, Unix timestamp conversion, regex testing, color conversion, cron expression building, and code formatters for HTML, CSS, JavaScript, SQL, and XML.",
+  },
+  {
+    question: "Does DevByte support Flutter and Dart development?",
+    answer:
+      "Yes. DevByte has dedicated Flutter and Dart tools including a JSON-to-Dart model generator with null safety, a Freezed model generator, a Pubspec.yaml helper, and a Dart list formatter.",
+  },
+];
+
 export default function HomePage() {
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: "DevByte",
+          url: "https://devbyte.tools",
+          description:
+            "Free privacy-friendly online developer tools. Format JSON, generate Dart models, decode JWTs, encode Base64, generate UUIDs, and more.",
+          potentialAction: {
+            "@type": "SearchAction",
+            target: {
+              "@type": "EntryPoint",
+              urlTemplate: "https://devbyte.tools/tools?q={search_term_string}",
+            },
+            "query-input": "required name=search_term_string",
+          },
+        }}
+      />
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          name: "DevByte",
+          url: "https://devbyte.tools",
+          logo: "https://devbyte.tools/icon.svg",
+          description:
+            "Free online developer tools platform. Privacy-friendly utilities for software engineers and Flutter developers.",
+        }}
+      />
       <Header />
 
       <main className="flex-1">
@@ -40,9 +107,9 @@ export default function HomePage() {
 
             {/* Headline */}
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-slate-900 dark:text-white leading-[1.12]">
-              Developer tools that{" "}
+              Free Online{" "}
               <span className="bg-gradient-to-r from-indigo-600 via-blue-600 to-violet-600 bg-clip-text text-transparent">
-                just work.
+                Developer Tools
               </span>
             </h1>
 
@@ -367,7 +434,36 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* 7. PRIVACY CALL TO ACTION BANNER */}
+        {/* 7. HOMEPAGE FAQ SECTION */}
+        <section className="py-14 sm:py-20 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-2xl mx-auto mb-10">
+            <div className="flex items-center justify-center gap-2 text-indigo-600 dark:text-indigo-400 text-xs font-bold uppercase tracking-wider mb-1">
+              <HelpCircle className="w-4 h-4" />
+              <span>Common Questions</span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white mt-1">
+              Frequently Asked Questions
+            </h2>
+          </div>
+
+          <div className="space-y-4 max-w-3xl mx-auto">
+            {HOMEPAGE_FAQS.map((faq) => (
+              <div
+                key={faq.question}
+                className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5"
+              >
+                <h3 className="font-semibold text-slate-900 dark:text-white text-sm">
+                  {faq.question}
+                </h3>
+                <p className="mt-1.5 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                  {faq.answer}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* 8. PRIVACY CALL TO ACTION BANNER */}
         <section className="py-12 bg-linear-to-r from-indigo-900 via-blue-900 to-slate-900 text-white">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">

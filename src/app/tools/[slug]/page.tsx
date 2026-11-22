@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { TOOLS } from "@/lib/constants/tools";
+import { TOOL_SEO } from "@/lib/constants/tool-seo";
 import { Icon } from "@/components/common/Icon";
 import { Badge } from "@/components/common/Badge";
 import { ToolCard } from "@/components/tools/ToolCard";
@@ -23,6 +24,10 @@ interface ToolPageProps {
   params: Promise<{ slug: string }>;
 }
 
+export async function generateStaticParams() {
+  return TOOLS.map((tool) => ({ slug: tool.slug }));
+}
+
 export async function generateMetadata({
   params,
 }: ToolPageProps): Promise<Metadata> {
@@ -32,14 +37,26 @@ export async function generateMetadata({
     return { title: "Tool Not Found - DevByte" };
   }
 
+  const seo = TOOL_SEO[slug];
+  const title = seo?.seoTitle ?? `${tool.name} - Free Online Developer Tool | DevByte`;
+  const description = seo?.seoDescription ?? tool.description;
+
   return {
-    title: `${tool.name} - Free Online Developer Tool | DevByte`,
-    description: tool.description,
+    title,
+    description,
     keywords: tool.keywords,
+    alternates: { canonical: `/tools/${slug}` },
     openGraph: {
-      title: `${tool.name} - DevByte`,
-      description: tool.description,
+      title,
+      description,
+      url: `https://devbyte.tools/tools/${slug}`,
+      siteName: "DevByte",
       type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
     },
   };
 }
@@ -52,17 +69,20 @@ export default async function ToolDetailPage({ params }: ToolPageProps) {
     notFound();
   }
 
+  const seo = TOOL_SEO[slug];
+
   const relatedTools = TOOLS.filter(
     (t) => t.id !== tool.id && (t.category === tool.category || t.popular)
   ).slice(0, 3);
 
-  const schemaData = {
+  const softwareSchema = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
     name: tool.name,
     operatingSystem: "Any",
     applicationCategory: "DeveloperApplication",
-    description: tool.description,
+    description: seo?.seoDescription ?? tool.description,
+    url: `https://devbyte.tools/tools/${slug}`,
     offers: {
       "@type": "Offer",
       price: "0",
@@ -70,9 +90,76 @@ export default async function ToolDetailPage({ params }: ToolPageProps) {
     },
   };
 
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: "https://devbyte.tools",
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Tools",
+        item: "https://devbyte.tools/tools",
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: tool.name,
+        item: `https://devbyte.tools/tools/${slug}`,
+      },
+    ],
+  };
+
+  const faqSchema =
+    seo && seo.faqs.length > 0
+      ? {
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: seo.faqs.map((f) => ({
+            "@type": "Question",
+            name: f.question,
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: f.answer,
+            },
+          })),
+        }
+      : null;
+
+  const faqs = seo?.faqs ?? [
+    {
+      question: "Is my data or token sent to external servers?",
+      answer:
+        "No. DevByte is architected to execute all parsing, encoding, and code generation client-side within your browser. No server logging or external data transmission occurs.",
+    },
+    {
+      question: "Can I use this tool offline?",
+      answer:
+        "Yes, once the page assets are loaded in your browser session, all computation functions locally even without an active internet connection.",
+    },
+    {
+      question: "Is DevByte free for commercial and professional use?",
+      answer:
+        "Yes. DevByte is 100% free for individual developers, enterprise software engineers, and students worldwide.",
+    },
+  ];
+
+  const howToSteps = seo?.howToSteps ?? [
+    "Paste your payload or use the sample button to load a standard test fixture.",
+    "Processing happens instantly in your browser memory without sending data to servers.",
+    "Export the formatted result or copy directly to your clipboard with one click.",
+  ];
+
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
-      <JsonLd data={schemaData} />
+      <JsonLd data={softwareSchema} />
+      <JsonLd data={breadcrumbSchema} />
+      {faqSchema && <JsonLd data={faqSchema} />}
       <Header />
 
       <main className="flex-1 py-8 sm:py-12">
@@ -121,10 +208,10 @@ export default async function ToolDetailPage({ params }: ToolPageProps) {
                 </div>
 
                 <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-                  {tool.name}
+                  {seo?.h1 ?? tool.name}
                 </h1>
                 <p className="mt-2 text-sm sm:text-base text-slate-600 dark:text-slate-400 max-w-3xl leading-relaxed">
-                  {tool.description}
+                  {seo?.seoDescription ?? tool.description}
                 </p>
               </div>
             </div>
@@ -156,30 +243,16 @@ export default async function ToolDetailPage({ params }: ToolPageProps) {
               How to Use the {tool.name}
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
-              <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60">
-                <div className="font-bold text-slate-900 dark:text-white mb-1">
-                  1. Paste Your Input
+              {howToSteps.map((step, i) => (
+                <div key={i} className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60">
+                  <div className="font-bold text-slate-900 dark:text-white mb-1">
+                    {i + 1}. {i === 0 ? "Paste Your Input" : i === 1 ? "Instant Processing" : "Copy or Download"}
+                  </div>
+                  <p className="text-slate-600 dark:text-slate-400 text-xs leading-relaxed">
+                    {step}
+                  </p>
                 </div>
-                <p className="text-slate-600 dark:text-slate-400 text-xs leading-relaxed">
-                  Paste your payload or use the sample button to load a standard test fixture.
-                </p>
-              </div>
-              <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60">
-                <div className="font-bold text-slate-900 dark:text-white mb-1">
-                  2. Client-Side Evaluation
-                </div>
-                <p className="text-slate-600 dark:text-slate-400 text-xs leading-relaxed">
-                  Processing happens instantly in your browser memory without sending data to servers.
-                </p>
-              </div>
-              <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60">
-                <div className="font-bold text-slate-900 dark:text-white mb-1">
-                  3. Copy or Download
-                </div>
-                <p className="text-slate-600 dark:text-slate-400 text-xs leading-relaxed">
-                  Export the formatted result or copy directly to your clipboard with one click.
-                </p>
-              </div>
+              ))}
             </div>
           </section>
 
@@ -190,30 +263,19 @@ export default async function ToolDetailPage({ params }: ToolPageProps) {
               Frequently Asked Questions
             </h2>
             <div className="space-y-4">
-              <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5">
-                <h3 className="font-semibold text-slate-900 dark:text-white text-sm">
-                  Is my data or token sent to external servers?
-                </h3>
-                <p className="mt-1.5 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                  No. DevByte is architected to execute all parsing, encoding, and code generation client-side within your browser. No server logging or external data transmission occurs.
-                </p>
-              </div>
-              <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5">
-                <h3 className="font-semibold text-slate-900 dark:text-white text-sm">
-                  Can I use this tool offline?
-                </h3>
-                <p className="mt-1.5 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                  Yes, once the page assets are loaded in your browser session, all computation functions locally even without an active internet connection.
-                </p>
-              </div>
-              <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5">
-                <h3 className="font-semibold text-slate-900 dark:text-white text-sm">
-                  Is DevByte free for commercial and professional use?
-                </h3>
-                <p className="mt-1.5 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                  Yes. DevByte is 100% free for individual developers, enterprise software engineers, and students worldwide.
-                </p>
-              </div>
+              {faqs.map((faq) => (
+                <div
+                  key={faq.question}
+                  className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5"
+                >
+                  <h3 className="font-semibold text-slate-900 dark:text-white text-sm">
+                    {faq.question}
+                  </h3>
+                  <p className="mt-1.5 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                    {faq.answer}
+                  </p>
+                </div>
+              ))}
             </div>
           </section>
 

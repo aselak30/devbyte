@@ -133,6 +133,14 @@ const DartListFormatter = dynamic(
   { ssr: false, loading: () => <ToolLoadingSkeleton /> }
 );
 
+const JavaScriptFormatter = dynamic(
+  () =>
+    import("@/features/formatters/JavaScriptFormatter").then(
+      (mod) => mod.JavaScriptFormatter
+    ),
+  { ssr: false, loading: () => <ToolLoadingSkeleton /> }
+);
+
 function ToolLoadingSkeleton() {
   return (
     <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 text-center animate-pulse">
@@ -182,6 +190,8 @@ export function ToolRenderer({ tool }: ToolRendererProps) {
       return <XmlFormatter />;
     case "dart-list-formatter":
       return <DartListFormatter />;
+    case "javascript-formatter":
+      return <JavaScriptFormatter />;
     default:
       return <JsonFormatter />;
   }

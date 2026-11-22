@@ -3,7 +3,7 @@ import { TOOLS } from "@/lib/constants/tools";
 import { TUTORIALS } from "@/lib/constants/tutorials";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = "https://devbyte.tools";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://devbyte.tools";
 
   // Static routes
   const staticRoutes: MetadataRoute.Sitemap = [

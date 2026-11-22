@@ -3,6 +3,7 @@ import Script from "next/script";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://devbyte.tools"),
   title: "DevByte - Developer Tools That Just Work",
   description:
     "Fast, privacy-friendly online developer tools for software engineers, web and mobile developers. JSON formatters, Dart model generators, JWT decoders, Base64, UUIDs, and more.",
@@ -17,6 +18,14 @@ export const metadata: Metadata = {
     "Unix timestamp converter",
   ],
   authors: [{ name: "DevByte Team" }],
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+    },
+  },
   openGraph: {
     title: "DevByte - Developer Tools That Just Work",
     description:
@@ -30,6 +39,8 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "DevByte - Developer Tools That Just Work",
     description: "Fast, privacy-friendly online developer tools that just work.",
+    creator: "@devbytetools",
+    site: "@devbytetools",
   },
   other: {
     "google-adsense-account": "ca-pub-5075378095924370",
